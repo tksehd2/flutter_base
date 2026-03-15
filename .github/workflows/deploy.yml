@@ -1,0 +1,68 @@
+name: Build and Release Debug APK
+
+on:
+  push: 
+    branches: [ main ] 
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+      
+      # 👇 [추가] 환경변수에서 값을 읽어 키스토어와 프로퍼티 파일 생성
+      - name: Setup Keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+        run: |
+          # 1. Base64를 디코딩하여 android/app/ 폴더에 debug.keystore 복원
+          echo "$KEYSTORE_BASE64" | base64 --decode > android/app/debug.keystore
+          
+          # 2. android/ 폴더에 key.properties 파일 생성
+          cat <<EOF > android/key.properties
+          storePassword=$STORE_PASSWORD
+          keyPassword=$KEY_PASSWORD
+          keyAlias=$KEY_ALIAS
+          storeFile=app/debug.keystore
+          EOF
+
+      - name: Build Runner
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      # 디버그 빌드 실행
+      - name: Build Debug APK
+        run: flutter build apk --debug
+
+      # 빌드된 디버그 APK 업로드
+      - name: Create Release and Upload APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: debug-build-${{ github.run_number }}
+          name: "Debug APK Build #${{ github.run_number }}"
+          files: build/app/outputs/flutter-apk/app-debug.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
