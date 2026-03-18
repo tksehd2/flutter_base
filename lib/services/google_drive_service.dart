@@ -1,12 +1,11 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_base/services/google_auth_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'google_auth_service.dart';
 
-// 구글 API 통신 시 토큰을 주입해 주는 커스텀 HTTP 클라이언트
 class _GoogleAuthClient extends http.BaseClient {
   final Map<String, String> _headers;
   final http.Client _client = http.Client();
@@ -21,15 +20,43 @@ class _GoogleAuthClient extends http.BaseClient {
 }
 
 class GoogleDriveService {
-  static final GoogleDriveService _instance = GoogleDriveService._internal();
-  factory GoogleDriveService() => _instance;
-  GoogleDriveService._internal();
+  static GoogleDriveService? _instance;
 
-  // 1️⃣ 구글 드라이브(appDataFolder)에 저장될 백업 파일 이름
-  final String _backupFileName = 'seesaw_diary_backup.sqlite';
+  /// [backupFileName] 드라이브에 저장될 백업 파일 이름
+  /// [localDbFileName] 로컬 DB 파일 이름
+  /// [onBeforeRestore] 복구 전 DB 연결 해제 콜백
+  /// [onAfterRestore] 복구 후 DB 재연결 콜백
+  static void configure({
+    required String backupFileName,
+    required String localDbFileName,
+    Future<void> Function()? onBeforeRestore,
+    Future<void> Function()? onAfterRestore,
+  }) {
+    _instance = GoogleDriveService._internal(
+      backupFileName: backupFileName,
+      localDbFileName: localDbFileName,
+      onBeforeRestore: onBeforeRestore,
+      onAfterRestore: onAfterRestore,
+    );
+  }
 
-  // 2️⃣ native.dart에서 명시한 실제 로컬 DB 파일 이름
-  final String _localDbFileName = 'diary_db.sqlite';
+  factory GoogleDriveService() {
+    assert(_instance != null, 'GoogleDriveService.configure()를 먼저 호출하세요.');
+    return _instance!;
+  }
+
+  GoogleDriveService._internal({
+    required String backupFileName,
+    required String localDbFileName,
+    this.onBeforeRestore,
+    this.onAfterRestore,
+  })  : _backupFileName = backupFileName,
+        _localDbFileName = localDbFileName;
+
+  final String _backupFileName;
+  final String _localDbFileName;
+  final Future<void> Function()? onBeforeRestore;
+  final Future<void> Function()? onAfterRestore;
 
   // 드라이브 API 클라이언트 초기화 헬퍼
   Future<drive.DriveApi?> _getDriveApi() async {
@@ -166,10 +193,11 @@ class GoogleDriveService {
 
       final fileId = fileList.files!.first.id!;
 
-      // 2. [매우 중요] 기존 DB 연결 해제 (파일 Lock 풀기)
-      // 이 작업을 하지 않으면 OS 단에서 덮어쓰기가 거부될 수 있습니다.
-      debugPrint('복구 진행: 기존 DB 연결 해제 중...');
-      // TODO: Close database
+      // 기존 DB 연결 해제 (파일 Lock 풀기)
+      if (onBeforeRestore != null) {
+        debugPrint('복구 진행: 기존 DB 연결 해제 중...');
+        await onBeforeRestore!();
+      }
 
       // 3. 백업 파일 다운로드 스트림 요청
       final response =
@@ -191,16 +219,17 @@ class GoogleDriveService {
       await sink.flush();
       await sink.close();
 
-      // 6. [매우 중요] DB 재연결
-      debugPrint('복구 진행: DB 재연결 중...');
-      // TODO: Reopen databsse
+      // DB 재연결
+      if (onAfterRestore != null) {
+        debugPrint('복구 진행: DB 재연결 중...');
+        await onAfterRestore!();
+      }
 
       debugPrint('복구 완료: 성공적으로 데이터를 복원했습니다.');
       return true;
     } catch (e) {
       debugPrint('복구 중 에러 발생: $e');
-      // 에러 발생 시에도 안전을 위해 DB 재연결 시도
-      // TODO: Reopen databsse
+      if (onAfterRestore != null) await onAfterRestore!();
       return false;
     }
   }

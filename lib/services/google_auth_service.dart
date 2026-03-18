@@ -2,22 +2,35 @@ import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class GoogleAuthService {
-  static final GoogleAuthService _instance = GoogleAuthService._internal();
-  factory GoogleAuthService() => _instance;
-  GoogleAuthService._internal();
+  static GoogleAuthService? _instance;
 
-  final List<String> _scopes = [
-    'https://www.googleapis.com/auth/generative-language.peruserquota',
-    'https://www.googleapis.com/auth/generative-language.tuning.readonly',
-    'https://www.googleapis.com/auth/drive.appdata', // 👈 [추가] 숨겨진 백업 폴더 접근 권한
-  ];
+  /// 앱 시작 시 반드시 1회 호출하여 초기화해야 합니다.
+  /// [serverClientId] Google Cloud Console에서 발급받은 OAuth 클라이언트 ID
+  /// [scopes] 요청할 OAuth 스코프 목록
+  static void configure({
+    required String serverClientId,
+    required List<String> scopes,
+  }) {
+    _instance = GoogleAuthService._internal(
+      serverClientId: serverClientId,
+      scopes: scopes,
+    );
+  }
 
-  final String _serverClientId =
-      '417933943985-0ovk3hsmsn5fpog3719n3r21i0dlvl7f.apps.googleusercontent.com';
+  factory GoogleAuthService() {
+    assert(_instance != null, 'GoogleAuthService.configure()를 먼저 호출하세요.');
+    return _instance!;
+  }
 
+  GoogleAuthService._internal({
+    required String serverClientId,
+    required List<String> scopes,
+  })  : _serverClientId = serverClientId,
+        _scopes = scopes;
+
+  final List<String> _scopes;
+  final String _serverClientId;
   bool _isInitialized = false;
-
-  // ⭐️ [핵심] 로그인 성공 시 계정 정보를 메모리에 상주시켜서 돌려쓰기
   GoogleSignInAccount? _currentUser;
 
   Future<void> _init() async {
