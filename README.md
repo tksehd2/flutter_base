@@ -2,6 +2,12 @@
 
 Flutter 앱 팩토리용 템플릿 저장소. 새 앱을 만들 때 이 저장소를 복제한 뒤, 필요한 기능만 켜고 나머지는 끄는 방식으로 시작합니다.
 
+기본 초기화 명령:
+
+```bash
+dart run tool/create_app.dart
+```
+
 새 앱으로 시작할 때는 먼저 [`app_manifest.yaml`](/Users/tksehd2/Documents/flutter_proj/flutter_base/app_manifest.yaml) 과 [`NEW_APP_CHECKLIST.md`](/Users/tksehd2/Documents/flutter_proj/flutter_base/NEW_APP_CHECKLIST.md) 를 확인하세요.  
 실제 브랜딩, 시크릿 설정, 빌드, 배포 준비 절차는 `NEW_APP_CHECKLIST.md` 하나를 기준으로 따라가면 됩니다.
 
@@ -27,6 +33,7 @@ Drift와 Dio는 지금 템플릿에서 선택적으로 끌 수는 있지만, 역
 
 ## 새 앱으로 복제할 때 먼저 볼 파일
 
+- [`tool/create_app.dart`](/Users/tksehd2/Documents/flutter_proj/flutter_base/tool/create_app.dart): 크로스플랫폼 앱 초기화 CLI
 - [`app_manifest.yaml`](/Users/tksehd2/Documents/flutter_proj/flutter_base/app_manifest.yaml): 앱 이름, ID, feature 사용 여부, billing/analytics/backup 기대치
 - [`NEW_APP_CHECKLIST.md`](/Users/tksehd2/Documents/flutter_proj/flutter_base/NEW_APP_CHECKLIST.md): 복제 후 실제 작업 순서와 세부 명령/설정 절차
 - [`lib/app/config/app_features.dart`](/Users/tksehd2/Documents/flutter_proj/flutter_base/lib/app/config/app_features.dart): feature flag 단일 진입점
@@ -95,6 +102,12 @@ lib/
 
 ```dart
 static const bool gemini = false;
+```
+
+CLI로도 같은 항목을 바꿀 수 있습니다.
+
+```bash
+dart run tool/create_app.dart --app-name "PlanB" --bundle-id "com.example.planb" --gemini false
 ```
 
 ## 기능이 꺼질 때 동작
@@ -175,4 +188,4 @@ final folderId = await ref.read(googleDriveServiceProvider).getOrCreateFolder(
 
 Gemini 와 Google Drive 는 bearer token 을 직접 받습니다. 토큰 획득 책임은 호출부에 있습니다.
 
-빌드/배포 명령, 시크릿 설정, 앱 이름/Bundle ID 변경 절차는 [`NEW_APP_CHECKLIST.md`](/Users/tksehd2/Documents/flutter_proj/flutter_base/NEW_APP_CHECKLIST.md) 에 모아두었습니다.
+빌드/배포 명령, 시크릿 설정, 앱 이름/Bundle ID 변경 절차는 [`NEW_APP_CHECKLIST.md`](/Users/tksehd2/Documents/flutter_proj/flutter_base/NEW_APP_CHECKLIST.md) 에 모아두었습니다. 기본 경로는 `tool/create_app.dart` 입니다.

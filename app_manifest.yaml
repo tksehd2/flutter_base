@@ -10,16 +10,7 @@ features:
   gemini: true
   drift_db: true
   dio_network: true
-
-product_expectations:
-  billing_expected: false
-  analytics_expected: false
-  backup_expected: false
-
-review_and_demo:
-  has_public_demo_mode: false
-  app_store_review_notes: ""
-  internal_demo_notes: "If Google features are enabled, verify sign-in, token flow, and permission scopes before review."
+  demo_mode: false
 
 setup_notes:
   first_edit_files:
@@ -32,3 +23,14 @@ setup_notes:
     - "GOOGLE_SERVER_CLIENT_ID"
     - "GitHub Actions signing secrets"
   clone_checklist_file: "NEW_APP_CHECKLIST.md"
+
+# When adding or removing features, update the sections below as well.
+product_expectations:
+  billing_expected: false
+  analytics_expected: false
+  backup_expected: false
+
+review_and_demo:
+  has_public_demo_mode: false
+  app_store_review_notes: ""
+  internal_demo_notes: "If Google features are enabled, verify sign-in, token flow, and permission scopes before review."

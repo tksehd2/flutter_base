@@ -2,6 +2,34 @@
 
 이 문서 하나만 보고 새 앱 브랜딩, 기능 설정, 빌드, 배포 준비까지 끝내는 것을 목표로 합니다.
 
+## 0. 기본 초기화 명령 실행
+
+권장 명령:
+
+```bash
+dart run tool/create_app.dart
+```
+
+비대화형 예시:
+
+```bash
+dart run tool/create_app.dart \
+  --app-name "PlanB" \
+  --bundle-id "com.example.planb" \
+  --google-auth true \
+  --google-drive true \
+  --gemini false \
+  --drift-db true \
+  --dio-network true \
+  --demo-mode false
+```
+
+이 CLI가 자동으로 처리하는 것:
+- 앱 이름 rename 흐름 실행
+- Bundle/Application ID rename 흐름 실행
+- `app_manifest.yaml` 갱신
+- `lib/app/config/app_features.dart` 갱신
+
 ## 1. 앱 기본 정보 확정
 
 먼저 아래 항목을 확정하고 [`app_manifest.yaml`](/Users/tksehd2/Documents/flutter_proj/flutter_base/app_manifest.yaml) 에 기록합니다.
@@ -15,11 +43,6 @@
 - 앱 리뷰나 데모 관련 메모
 
 ## 2. 앱 이름 / 패키지명 변경
-
-### 자동 스크립트
-
-- 앱 이름 변경: [`fix_app_name.bat`](/Users/tksehd2/Documents/flutter_proj/flutter_base/fix_app_name.bat)
-- 패키지명(Bundle ID) 변경: [`fix_package_name.bat`](/Users/tksehd2/Documents/flutter_proj/flutter_base/fix_package_name.bat)
 
 ### 수동 명령
 
