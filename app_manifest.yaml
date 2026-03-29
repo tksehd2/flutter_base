@@ -10,12 +10,11 @@ features:
   gemini: true
   drift_db: true
   dio_network: true
-  demo_mode: false
+  demo_mode: true
 
 setup_notes:
   first_edit_files:
     - "app_manifest.yaml"
-    - "lib/app/config/app_features.dart"
     - "lib/app/presentation/app_home_page.dart"
     - "pubspec.yaml"
     - "ios/ExportOptions.plist"

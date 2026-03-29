@@ -115,7 +115,7 @@ Future<void> main(List<String> args) async {
       demoMode: _resolveBool(
         flags: flags,
         name: 'demo-mode',
-        prompt: 'demoMode 메타데이터 기록',
+        prompt: 'demoMode 사용',
         currentValue: currentState.demoMode,
       ),
       dryRun: flags['dry-run'] == 'true',
@@ -138,7 +138,7 @@ Future<void> main(List<String> args) async {
 - gemini: ${config.gemini}
 - driftDb: ${config.driftDb}
 - dioNetwork: ${config.dioNetwork}
-- demoMode(metadata only): ${config.demoMode}
+- demoMode: ${config.demoMode}
 - dryRun: ${config.dryRun}
 ''');
 
@@ -228,7 +228,10 @@ CurrentTemplateState _readCurrentState(
     gemini: _readConstBool(appFeaturesContent, 'gemini') ?? true,
     driftDb: _readConstBool(appFeaturesContent, 'driftDb') ?? true,
     dioNetwork: _readConstBool(appFeaturesContent, 'dioNetwork') ?? true,
-    demoMode: _readYamlBool(manifestContent, 'demo_mode') ?? false,
+    demoMode:
+        _readConstBool(appFeaturesContent, 'demoMode') ??
+        _readYamlBool(manifestContent, 'demo_mode') ??
+        false,
   );
 }
 
@@ -407,22 +410,27 @@ void _updateAppFeatures(File file, AppInitConfig config) {
   content = _replaceConstBool(content, 'gemini', config.gemini);
   content = _replaceConstBool(content, 'driftDb', config.driftDb);
   content = _replaceConstBool(content, 'dioNetwork', config.dioNetwork);
+  content = _replaceConstBool(content, 'demoMode', config.demoMode);
 
   file.writeAsStringSync(content);
 }
 
 String _replaceQuotedYamlValue(String content, String key, String value) {
-  return content.replaceFirst(
+  return content.replaceFirstMapped(
     RegExp('(^\\s*$key:\\s*)"([^"]*)"', multiLine: true),
-    '\$1"$value"',
+    (match) => '${match.group(1)}"${_escapeYamlDoubleQuoted(value)}"',
   );
 }
 
 String _replaceBoolYamlValue(String content, String key, bool value) {
-  return content.replaceFirst(
+  return content.replaceFirstMapped(
     RegExp('(^\\s*$key:\\s*)(true|false)', multiLine: true),
-    '\$1$value',
+    (match) => '${match.group(1)}$value',
   );
+}
+
+String _escapeYamlDoubleQuoted(String value) {
+  return value.replaceAll('\\', r'\\').replaceAll('"', r'\"');
 }
 
 String _replaceConstBool(String content, String key, bool value) {
@@ -439,7 +447,6 @@ void _printSummary(AppInitConfig config, {required bool dryRun}) {
   stdout.writeln('- feature flags updated: ${dryRun ? 'dry-run only' : 'yes'}');
   stdout.writeln('- manifest updated: ${dryRun ? 'dry-run only' : 'yes'}');
   stdout.writeln('- rename flow: ${dryRun ? 'skipped (dry-run)' : 'done'}');
-  stdout.writeln('- demoMode: 현재 템플릿 코드에는 없어서 manifest metadata로만 기록됩니다.');
   stdout.writeln('');
   stdout.writeln('## Next manual steps');
   stdout.writeln('- replace app icon');

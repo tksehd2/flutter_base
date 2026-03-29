@@ -2,14 +2,14 @@
 
 Flutter 앱 팩토리용 템플릿 저장소. 새 앱을 만들 때 이 저장소를 복제한 뒤, 필요한 기능만 켜고 나머지는 끄는 방식으로 시작합니다.
 
-기본 초기화 명령:
+기본 초기화는 `tool/create_app.dart` 로 진행합니다.
 
 ```bash
 dart run tool/create_app.dart
 ```
 
-새 앱으로 시작할 때는 먼저 [`app_manifest.yaml`](/Users/tksehd2/Documents/flutter_proj/flutter_base/app_manifest.yaml) 과 [`NEW_APP_CHECKLIST.md`](/Users/tksehd2/Documents/flutter_proj/flutter_base/NEW_APP_CHECKLIST.md) 를 확인하세요.  
-실제 브랜딩, 시크릿 설정, 빌드, 배포 준비 절차는 `NEW_APP_CHECKLIST.md` 하나를 기준으로 따라가면 됩니다.
+새 앱 복제 후 실제 작업 순서는 [`NEW_APP_CHECKLIST.md`](/Users/tksehd2/Documents/flutter_proj/flutter_base/NEW_APP_CHECKLIST.md) 하나만 기준으로 따라가면 됩니다.  
+[`app_manifest.yaml`](/Users/tksehd2/Documents/flutter_proj/flutter_base/app_manifest.yaml) 은 앱 메타데이터 기록용이고, CLI가 앱 이름, Bundle ID, feature 선택 결과를 같이 반영합니다.
 
 ## 구조 원칙
 
@@ -34,11 +34,11 @@ Drift와 Dio는 지금 템플릿에서 선택적으로 끌 수는 있지만, 역
 ## 새 앱으로 복제할 때 먼저 볼 파일
 
 - [`tool/create_app.dart`](/Users/tksehd2/Documents/flutter_proj/flutter_base/tool/create_app.dart): 크로스플랫폼 앱 초기화 CLI
-- [`app_manifest.yaml`](/Users/tksehd2/Documents/flutter_proj/flutter_base/app_manifest.yaml): 앱 이름, ID, feature 사용 여부, billing/analytics/backup 기대치
 - [`NEW_APP_CHECKLIST.md`](/Users/tksehd2/Documents/flutter_proj/flutter_base/NEW_APP_CHECKLIST.md): 복제 후 실제 작업 순서와 세부 명령/설정 절차
+- [`app_manifest.yaml`](/Users/tksehd2/Documents/flutter_proj/flutter_base/app_manifest.yaml): 앱 이름, ID, feature 사용 여부, billing/analytics/backup 기대치
 - [`lib/app/config/app_features.dart`](/Users/tksehd2/Documents/flutter_proj/flutter_base/lib/app/config/app_features.dart): feature flag 단일 진입점
-- [`lib/app/presentation/app_home_page.dart`](/Users/tksehd2/Documents/flutter_proj/flutter_base/lib/app/presentation/app_home_page.dart): 기본 앱 시작 화면
 - [`lib/app/bootstrap/app_bootstrap.dart`](/Users/tksehd2/Documents/flutter_proj/flutter_base/lib/app/bootstrap/app_bootstrap.dart): 앱 시작 시 실제 초기화 위치
+- [`lib/app/presentation/app_home_page.dart`](/Users/tksehd2/Documents/flutter_proj/flutter_base/lib/app/presentation/app_home_page.dart): 기본 앱 시작 화면
 
 ## 현재 구조
 
@@ -93,18 +93,13 @@ lib/
 - `gemini`
 - `driftDb`
 - `dioNetwork`
+- `demoMode`
 
 실제 동작에는 의존성을 반영한 effective getter 를 씁니다.
 - `googleDriveEnabled = googleAuth && googleDrive`
 - `geminiEnabled = googleAuth && gemini`
 
-기능을 끄려면 한 곳만 바꾸면 됩니다.
-
-```dart
-static const bool gemini = false;
-```
-
-CLI로도 같은 항목을 바꿀 수 있습니다.
+권장 경로는 CLI로 같이 바꾸는 것입니다.
 
 ```bash
 dart run tool/create_app.dart --app-name "PlanB" --bundle-id "com.example.planb" --gemini false
@@ -117,6 +112,7 @@ dart run tool/create_app.dart --app-name "PlanB" --bundle-id "com.example.planb"
 - `gemini`: bootstrap 에서 초기화하지 않음, provider/service 접근 시 `UnsupportedError`
 - `driftDb`: provider 접근 차단
 - `dioNetwork`: provider 접근 차단
+- `demoMode`: 데모 모드 사용 여부를 나타내는 공용 bool 플래그
 
 ## 앱 시작 흐름
 
@@ -134,11 +130,11 @@ void main() {
 
 ## Production App Shell
 
-[`lib/app/presentation/app_home_page.dart`](/Users/tksehd2/Documents/flutter_proj/flutter_base/lib/app/presentation/app_home_page.dart) 는 이제 기본 production 시작 화면입니다.
+[`lib/app/presentation/app_home_page.dart`](/Users/tksehd2/Documents/flutter_proj/flutter_base/lib/app/presentation/app_home_page.dart) 는 기본 production 시작 화면입니다.
 
 - enabled feature 상태를 보여줌
 - 템플릿을 복제한 뒤 무엇을 먼저 바꿔야 하는지 안내함
-- demo 전용 버튼/로그 화면 없이 실제 앱 출발점 역할을 함
+- demo 전용 화면 없이 실제 앱 출발점 역할을 함
 
 가벼운 확장 포인트는 여기서 시작하는 것을 권장합니다.
 - billing 진입 섹션
@@ -188,4 +184,4 @@ final folderId = await ref.read(googleDriveServiceProvider).getOrCreateFolder(
 
 Gemini 와 Google Drive 는 bearer token 을 직접 받습니다. 토큰 획득 책임은 호출부에 있습니다.
 
-빌드/배포 명령, 시크릿 설정, 앱 이름/Bundle ID 변경 절차는 [`NEW_APP_CHECKLIST.md`](/Users/tksehd2/Documents/flutter_proj/flutter_base/NEW_APP_CHECKLIST.md) 에 모아두었습니다. 기본 경로는 `tool/create_app.dart` 입니다.
+빌드/배포 명령, GCP 설정, 시크릿 값, 앱 이름/Bundle ID 변경 절차는 [`NEW_APP_CHECKLIST.md`](/Users/tksehd2/Documents/flutter_proj/flutter_base/NEW_APP_CHECKLIST.md) 에 모아두었습니다.

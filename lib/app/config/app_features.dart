@@ -6,6 +6,7 @@ class AppFeatures {
   static const bool gemini = true;
   static const bool driftDb = true;
   static const bool dioNetwork = true;
+  static const bool demoMode = true;
 
   static bool get googleAuthEnabled => googleAuth;
 
@@ -16,4 +17,6 @@ class AppFeatures {
   static bool get driftDbEnabled => driftDb;
 
   static bool get dioNetworkEnabled => dioNetwork;
+
+  static bool get demoModeEnabled => demoMode;
 }

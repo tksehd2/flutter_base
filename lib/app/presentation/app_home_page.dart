@@ -13,6 +13,7 @@ class AppHomePage extends StatelessWidget {
       if (AppFeatures.geminiEnabled) 'Gemini',
       if (AppFeatures.driftDbEnabled) 'Drift DB',
       if (AppFeatures.dioNetworkEnabled) 'Dio Network',
+      if (AppFeatures.demoModeEnabled) 'Demo Mode',
     ];
 
     return Scaffold(

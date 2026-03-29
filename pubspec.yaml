@@ -69,7 +69,7 @@ dev_dependencies:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/icon/icon.png" # 실제 아이콘 이미지 경로
+  image_path: "assets/icon/app_icon.png" # 실제 아이콘 이미지 경로
   min_sdk_android: 21 # android config 관련 옵션
   
 # For information on the generic Dart part of this file, see the
