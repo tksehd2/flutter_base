@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../../../app/config/app_features.dart';
+
 class GoogleAuthService {
   static GoogleAuthService? _instance;
 
@@ -11,6 +13,7 @@ class GoogleAuthService {
     required String serverClientId,
     required List<String> scopes,
   }) {
+    _ensureFeatureEnabled();
     _instance = GoogleAuthService._internal(
       serverClientId: serverClientId,
       scopes: scopes,
@@ -18,15 +21,22 @@ class GoogleAuthService {
   }
 
   factory GoogleAuthService() {
+    _ensureFeatureEnabled();
     assert(_instance != null, 'GoogleAuthService.configure()를 먼저 호출하세요.');
     return _instance!;
+  }
+
+  static void _ensureFeatureEnabled() {
+    if (!AppFeatures.googleAuthEnabled) {
+      throw UnsupportedError('Google auth feature is disabled.');
+    }
   }
 
   GoogleAuthService._internal({
     required String serverClientId,
     required List<String> scopes,
-  })  : _serverClientId = serverClientId,
-        _scopes = scopes;
+  }) : _serverClientId = serverClientId,
+       _scopes = scopes;
 
   final List<String> _scopes;
   final String _serverClientId;

@@ -1,168 +1,177 @@
 # flutter_base
 
-Flutter 앱 개발을 위한 베이스 프로젝트.
-새 앱을 만들 때 이 저장소를 복제하여 시작합니다.
+Flutter 앱 팩토리용 템플릿 저장소. 새 앱을 만들 때 이 저장소를 복제한 뒤, 필요한 기능만 켜고 나머지는 끄는 방식으로 시작합니다.
 
----
+## 구조 원칙
 
-## 기술 스택
+- `app/`: 앱 시작점, feature flag, 부트스트랩, production app shell
+- `core/`: 대부분의 앱에서 계속 쓸 공통 인프라
+- `features/`: 끄거나 뺄 수 있는 선택 기능
 
-| 모듈 | 패키지 | 설명 |
-|------|---------|------|
-| **Google 로그인** | `google_sign_in` | Google OAuth 인증 및 토큰 관리 |
-| **Gemini API** | `http` | Gemini REST API를 통한 AI 텍스트 생성 |
-| **Google Drive 백업** | `googleapis` | appDataFolder를 이용한 DB 백업/복구 |
-| **상태 관리** | `provider` | ChangeNotifier 기반 상태 관리 |
-| **로컬 저장소** | `shared_preferences` | 키-값 기반 경량 데이터 저장 |
-| **파일 시스템** | `path_provider`, `path` | 앱 문서 디렉토리 접근 |
-| **UI 유틸** | `auto_size_text`, `cupertino_icons`, `sign_in_button` | 자동 크기 텍스트, 아이콘, 로그인 버튼 |
-| **앱 정보** | `package_info_plus` | 앱 버전/빌드 번호 조회 |
+`core/` 에 두는 것:
+- 공통 네트워크 클라이언트
+- 공통 데이터베이스 기반
+- 공통 provider
+- 여러 앱에서 반복적으로 재사용될 인프라
 
----
+`features/` 에 두는 것:
+- Google Auth, Google Drive, Gemini 같은 선택 기능
+- 앱별로 아예 빠질 수 있는 외부 연동/제품 기능
+- feature별 provider, data, presentation 코드
 
-## 프로젝트 구조
+Drift와 Dio는 지금 템플릿에서 선택적으로 끌 수는 있지만, 역할 자체는 제품 기능이 아니라 기반 인프라라서 `core/` 에 둡니다.  
+`features/` 설계 규칙은 [`lib/features/README.md`](/Users/tksehd2/Documents/flutter_proj/flutter_base/lib/features/README.md) 를 우선 기준으로 봅니다.
 
-```
+## 현재 구조
+
+```text
 lib/
-├── main.dart                        # 앱 진입점 및 서비스 초기화
-└── services/
-    ├── services.dart                # barrel export
-    ├── google_auth_service.dart     # Google 로그인 / 토큰 관리
-    ├── gemini_api_service.dart      # Gemini API 호출
-    └── google_drive_service.dart    # Drive 백업/복구
+├── main.dart
+├── app/
+│   ├── bootstrap/
+│   │   └── app_bootstrap.dart
+│   ├── config/
+│   │   └── app_features.dart
+│   └── presentation/
+│       └── app_home_page.dart
+├── core/
+│   ├── core.dart
+│   ├── database/
+│   │   ├── app_database.dart
+│   │   └── app_database.g.dart
+│   ├── network/
+│   │   └── app_dio.dart
+│   └── providers/
+│       └── app_providers.dart
+└── features/
+    ├── README.md
+    ├── gemini/
+    │   ├── gemini.dart
+    │   ├── data/
+    │   │   └── gemini_api_service.dart
+    │   └── providers/
+    │       └── gemini_providers.dart
+    ├── google_auth/
+    │   ├── google_auth.dart
+    │   ├── data/
+    │   │   └── google_auth_service.dart
+    │   └── providers/
+    │       └── google_auth_providers.dart
+    └── google_drive/
+        ├── google_drive.dart
+        ├── data/
+        │   └── google_drive_service.dart
+        └── providers/
+            └── google_drive_providers.dart
 ```
 
----
+## Feature Flags
 
-## 시작하기
+중앙 플래그는 [`lib/app/config/app_features.dart`](/Users/tksehd2/Documents/flutter_proj/flutter_base/lib/app/config/app_features.dart) 에서 관리합니다.
 
-### 1. 저장소 복제 후 패키지명/앱 이름 변경
+기본 플래그:
+- `googleAuth`
+- `googleDrive`
+- `gemini`
+- `driftDb`
+- `dioNetwork`
 
-```bash
-# 패키지명(Bundle ID) 변경
-fix_package_name.bat    # Windows
-# 또는 수동으로:
-dart pub global activate rename
-dart pub global run rename setBundleId --targets ios,android --value "com.yourcompany.yourapp"
+실제 동작에는 의존성을 반영한 effective getter 를 씁니다.
+- `googleDriveEnabled = googleAuth && googleDrive`
+- `geminiEnabled = googleAuth && gemini`
 
-# 앱 이름 변경
-fix_app_name.bat        # Windows
-# 또는 수동으로:
-dart pub global run rename setAppName --targets ios,android --value "앱이름"
+기능을 끄려면 한 곳만 바꾸면 됩니다.
+
+```dart
+static const bool gemini = false;
 ```
 
-### 2. 서비스 초기화 (`main.dart`)
+## 기능이 꺼질 때 동작
 
-모든 서비스는 `configure()`로 초기화한 뒤 `factory` 생성자로 어디서든 접근합니다.
+- `googleAuth`: bootstrap 에서 초기화하지 않음, auth provider/service 접근 시 `UnsupportedError`
+- `googleDrive`: OAuth scope 에서 빠짐, provider/service 접근 시 `UnsupportedError`
+- `gemini`: bootstrap 에서 초기화하지 않음, provider/service 접근 시 `UnsupportedError`
+- `driftDb`: provider 접근 차단
+- `dioNetwork`: provider 접근 차단
+
+## 앱 시작 흐름
+
+`main.dart` 는 얇게 유지합니다.
 
 ```dart
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-
-  GoogleAuthService.configure(
-    serverClientId: 'YOUR_CLIENT_ID.apps.googleusercontent.com',
-    scopes: ['https://www.googleapis.com/auth/drive.appdata'],
-  );
-
-  GeminiApiService.configure(model: 'gemini-2.5-flash');
-
-  GoogleDriveService.configure(
-    backupFileName: 'my_backup.sqlite',
-    localDbFileName: 'my_db.sqlite',
-    onBeforeRestore: () async => db.close(),
-    onAfterRestore: () async => db.reopen(),
-  );
-
-  runApp(const MyApp());
+  AppBootstrap.initialize();
+  runApp(const ProviderScope(child: MyApp()));
 }
 ```
 
-### 3. 서비스 사용
+초기화는 [`lib/app/bootstrap/app_bootstrap.dart`](/Users/tksehd2/Documents/flutter_proj/flutter_base/lib/app/bootstrap/app_bootstrap.dart) 에만 둡니다. 새 기능을 추가할 때도 startup wiring 은 여기로 모읍니다.
+
+## Production App Shell
+
+[`lib/app/presentation/app_home_page.dart`](/Users/tksehd2/Documents/flutter_proj/flutter_base/lib/app/presentation/app_home_page.dart) 는 이제 기본 production 시작 화면입니다.
+
+- enabled feature 상태를 보여줌
+- 템플릿을 복제한 뒤 무엇을 먼저 바꿔야 하는지 안내함
+- demo 전용 버튼/로그 화면 없이 실제 앱 출발점 역할을 함
+
+## 새 optional feature 추가 방법
+
+예: Firebase Remote Config 같은 새 선택 기능을 넣는 경우
+
+1. `lib/features/firebase_remote_config/` 폴더 생성
+2. `data/`, 필요하면 `providers/`, `presentation/` 추가
+3. `lib/features/firebase_remote_config/firebase_remote_config.dart` barrel 추가
+4. `lib/app/config/app_features.dart` 에 플래그 추가
+5. 초기화가 필요하면 `lib/app/bootstrap/app_bootstrap.dart` 에만 연결
+6. 공통 인프라가 아니면 `core/` 에 넣지 않음
+
+## 공통 사용 예시
 
 ```dart
-import 'package:flutter_base/services/services.dart';
+import 'package:flutter_base/core/core.dart';
+import 'package:flutter_base/features/google_auth/google_auth.dart';
+import 'package:flutter_base/features/gemini/gemini.dart';
+import 'package:flutter_base/features/google_drive/google_drive.dart';
 
-// Google 로그인
-final user = await GoogleAuthService().signIn();
+final db = ref.read(appDatabaseProvider);
+final dio = ref.read(dioProvider);
 
-// Gemini API 호출
-final result = await GeminiApiService().generateContent(prompt: '질문');
+final user = await ref.read(googleAuthStateProvider.notifier).signIn();
+final accessToken = await ref.read(googleAccessTokenProvider.future) ?? '';
 
-// Drive 백업 / 복구
-await GoogleDriveService().backupDatabase();
-await GoogleDriveService().restoreDatabase();
+final text = await ref.read(geminiApiServiceProvider).generateText(
+  prompt: '질문',
+  accessToken: accessToken,
+);
+
+final folderId = await ref.read(googleDriveServiceProvider).getOrCreateFolder(
+  accessToken: accessToken,
+  folderName: 'MyAppFiles',
+);
 ```
 
----
+Gemini 와 Google Drive 는 bearer token 을 직접 받습니다. 토큰 획득 책임은 호출부에 있습니다.
 
 ## 빌드 명령어
 
 ```bash
-flutter pub get                                            # 의존성 설치
-flutter run                                                # 앱 실행
-flutter build apk --debug                                  # 디버그 APK 빌드
-flutter build apk --release                                # 릴리즈 APK 빌드
-flutter analyze                                            # 정적 분석
-dart run build_runner build --delete-conflicting-outputs    # 코드 생성
+flutter pub get
+flutter run
+dart format .
+flutter analyze
+dart run build_runner build --delete-conflicting-outputs
+./build_aab.sh
+./upload_testflight.sh
 ```
 
----
+`build_runner` 를 실행하면 `lib/core/database/app_database.g.dart` 가 갱신됩니다.
 
-## CI/CD (GitHub Actions)
+## 배포 메모
 
-`main` 브랜치에 push하면 GitHub Actions가 디버그 APK를 자동 빌드하여 **GitHub Releases**에 업로드합니다.
+- Android AAB 로컬 빌드: [`build_aab.sh`](/Users/tksehd2/Documents/flutter_proj/flutter_base/build_aab.sh)
+- iOS Export 옵션: [`ios/ExportOptions.plist`](/Users/tksehd2/Documents/flutter_proj/flutter_base/ios/ExportOptions.plist)
+- 로컬 TestFlight 업로드: [`upload_testflight.sh`](/Users/tksehd2/Documents/flutter_proj/flutter_base/upload_testflight.sh)
 
-### GitHub Secrets 설정
-
-아래 4개의 Secret을 **Repository Settings > Secrets and variables > Actions**에 등록해야 합니다.
-
-| Secret 이름 | 설명 | 값 생성 방법 |
-|-------------|------|-------------|
-| `KEYSTORE_BASE64` | 디버그 키스토어 파일을 Base64로 인코딩한 문자열 | `base64 -w 0 debug.keystore` (Linux/Mac) 또는 `certutil -encode debug.keystore encoded.txt` (Windows) |
-| `KEY_ALIAS` | 키스토어 별칭 | 디버그 키스토어 기본값: `androiddebugkey` |
-| `KEY_PASSWORD` | 키 비밀번호 | 디버그 키스토어 기본값: `android` |
-| `STORE_PASSWORD` | 키스토어 비밀번호 | 디버그 키스토어 기본값: `android` |
-
-### 디버그 키스토어 생성
-
-기본 디버그 키스토어가 없는 경우 아래 명령어로 생성합니다.
-
-```bash
-keytool -genkey -v -keystore debug.keystore \
-  -alias androiddebugkey \
-  -keyalg RSA -keysize 2048 -validity 10000 \
-  -storepass android -keypass android \
-  -dname "CN=Android Debug,O=Android,C=US"
-```
-
-### 디버그 키스토어 해시 추출
-
-Google Cloud Console에서 OAuth 클라이언트를 등록할 때 SHA-1 인증서 지문이 필요합니다.
-
-```bash
-# SHA-1 해시 추출
-keytool -list -v -keystore debug.keystore -alias androiddebugkey -storepass android
-
-# 출력에서 "SHA1:" 줄의 값을 복사하여 Google Cloud Console에 등록
-```
-
----
-
-## 앱 아이콘 변경
-
-`pubspec.yaml`의 `flutter_launcher_icons` 설정에서 아이콘 경로를 수정한 뒤:
-
-```bash
-dart run flutter_launcher_icons
-```
-
----
-
-## Android 서명 구조
-
-| 환경 | key.properties 경로 | 용도 |
-|------|---------------------|------|
-| 로컬 릴리즈 빌드 | `../../build/android/key.properties` (프로젝트 외부) | 릴리즈 APK 서명 |
-| GitHub Actions | `android/key.properties` (CI에서 자동 생성) | 디버그 APK 서명 |
-
-릴리즈 빌드는 ProGuard + minify + shrinkResources가 활성화되어 있습니다.
+Google OAuth Client ID 는 `--dart-define=GOOGLE_SERVER_CLIENT_ID=...` 로 주입할 수 있습니다.

@@ -34,9 +34,14 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  dio: ^5.9.0
+  drift: ^2.28.2
+  drift_flutter: ^0.2.5
+  flutter_riverpod: ^2.6.1
   google_sign_in: ^7.2.0
   sign_in_button: ^4.0.1
   googleapis: ^16.0.0
+  image: ^4.5.4
   extension_google_sign_in_as_googleapis_auth: ^3.0.0
   auto_size_text: ^3.0.0
   package_info_plus: ^9.0.0
@@ -56,7 +61,9 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  build_runner: ^2.7.1
   change_app_package_name: ^1.5.0
+  drift_dev: ^2.28.1
   flutter_launcher_icons: ^0.14.4
 
 flutter_launcher_icons:
