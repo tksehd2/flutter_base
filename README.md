@@ -18,12 +18,14 @@ dart run tool/create_app.dart
 - `features/`: 끄거나 뺄 수 있는 선택 기능
 
 `core/` 에 두는 것:
+
 - 공통 네트워크 클라이언트
 - 공통 데이터베이스 기반
 - 공통 provider
 - 여러 앱에서 반복적으로 재사용될 인프라
 
 `features/` 에 두는 것:
+
 - Google Auth, Google Drive, Gemini 같은 선택 기능
 - 앱별로 아예 빠질 수 있는 외부 연동/제품 기능
 - feature별 provider, data, presentation 코드
@@ -35,8 +37,6 @@ Drift와 Dio는 지금 템플릿에서 선택적으로 끌 수는 있지만, 역
 
 - [`tool/create_app.dart`](/Users/tksehd2/Documents/flutter_proj/flutter_base/tool/create_app.dart): 크로스플랫폼 앱 초기화 CLI
 - [`NEW_APP_CHECKLIST.md`](/Users/tksehd2/Documents/flutter_proj/flutter_base/NEW_APP_CHECKLIST.md): 복제 후 실제 작업 순서와 세부 명령/설정 절차
-- [`app_manifest.yaml`](/Users/tksehd2/Documents/flutter_proj/flutter_base/app_manifest.yaml): 앱 이름, ID, feature 사용 여부, billing/analytics/backup 기대치
-- [`lib/app/config/app_features.dart`](/Users/tksehd2/Documents/flutter_proj/flutter_base/lib/app/config/app_features.dart): feature flag 단일 진입점
 - [`lib/app/bootstrap/app_bootstrap.dart`](/Users/tksehd2/Documents/flutter_proj/flutter_base/lib/app/bootstrap/app_bootstrap.dart): 앱 시작 시 실제 초기화 위치
 - [`lib/app/presentation/app_home_page.dart`](/Users/tksehd2/Documents/flutter_proj/flutter_base/lib/app/presentation/app_home_page.dart): 기본 앱 시작 화면
 
@@ -88,6 +88,7 @@ lib/
 중앙 플래그는 [`lib/app/config/app_features.dart`](/Users/tksehd2/Documents/flutter_proj/flutter_base/lib/app/config/app_features.dart) 에서 관리합니다.
 
 기본 플래그:
+
 - `googleAuth`
 - `googleDrive`
 - `gemini`
@@ -96,6 +97,7 @@ lib/
 - `demoMode`
 
 실제 동작에는 의존성을 반영한 effective getter 를 씁니다.
+
 - `googleDriveEnabled = googleAuth && googleDrive`
 - `geminiEnabled = googleAuth && gemini`
 
@@ -137,6 +139,7 @@ void main() {
 - demo 전용 화면 없이 실제 앱 출발점 역할을 함
 
 가벼운 확장 포인트는 여기서 시작하는 것을 권장합니다.
+
 - billing 진입 섹션
 - analytics/privacy 안내 섹션
 - 앱 설정 화면 진입점

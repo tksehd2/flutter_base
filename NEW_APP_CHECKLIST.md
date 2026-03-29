@@ -27,6 +27,7 @@ dart run tool/create_app.dart \
 ```
 
 이 CLI가 자동으로 처리하는 것:
+
 - 앱 이름 rename 흐름 실행
 - Bundle/Application ID rename 흐름 실행
 - [`app_manifest.yaml`](/Users/tksehd2/Documents/flutter_proj/flutter_base/app_manifest.yaml) 갱신
@@ -60,6 +61,7 @@ flutter run --dart-define=GOOGLE_SERVER_CLIENT_ID=YOUR_CLIENT_ID.apps.googleuser
 ```
 
 Google 기능을 켰다면 최소 확인:
+
 - 플랫폼별 OAuth Client 등록
 - 웹 애플리케이션 Client ID 준비
 - Android keystore SHA-1 등록
@@ -78,14 +80,12 @@ GitHub repo > `Settings > Secrets and variables > Actions`
 
 ### Android signing secrets
 
-- `KEYSTORE_BASE64`
-- `KEY_ALIAS`
-- `KEY_PASSWORD`
-- `STORE_PASSWORD`
-
-값 예시:
-- 디버그 키스토어 기본 alias: `androiddebugkey`
-- 디버그 키스토어 기본 password: `android`
+| Secret            | 값                               |
+| ----------------- | ------------------------------- |
+| `KEYSTORE_BASE64` | base64 -i debug.keystore        |
+| `KEY_ALIAS`       | 디버그 키스토어 기본값: `androiddebugkey` |
+| `KEY_PASSWORD`    | 디버그 키스토어 기본값: `android`         |
+| `STORE_PASSWORD`  | 디버그 키스토어 기본값: `android`         |
 
 키스토어가 없다면:
 
@@ -105,19 +105,30 @@ base64 -i debug.keystore | tr -d '\n'
 
 ### iOS signing secrets
 
-- `P12_BASE64`
-- `P12_PASSWORD`
-- `PROVISIONING_PROFILE_BASE64`
-- `PROVISIONING_PROFILE_NAME`
-- `KEYCHAIN_PASSWORD`
+| Secret                        | 값                                                       |
+| ----------------------------- | ------------------------------------------------------- |
+| `P12_BASE64`                  | base64 -i distribution.p12                              |
+| `P12_PASSWORD`                | `distribution.p12` 생성 시 넣은 비밀번호                         |
+| `PROVISIONING_PROFILE_BASE64` | base64 -i your_profile.mobileprovision                  |
+| `PROVISIONING_PROFILE_NAME`   | 프로파일 내부 이름. 예: `your_app_provision`                     |
+| `KEYCHAIN_PASSWORD`           | GitHub Actions 임시 keychain 비밀번호. 예: `your_app_keychain` |
 
 ### App Store Connect API secrets
 
-- `APP_STORE_CONNECT_API_KEY_ID`
-- `APP_STORE_CONNECT_ISSUER_ID`
-- `APP_STORE_CONNECT_API_KEY_BASE64`
+| Secret                             | 값                             |
+| ---------------------------------- | ----------------------------- |
+| `APP_STORE_CONNECT_API_KEY_ID`     | App Store Connect API Key ID  |
+| `APP_STORE_CONNECT_ISSUER_ID`      | App Store Connect Issuer ID   |
+| `APP_STORE_CONNECT_API_KEY_BASE64` | base64 -i AuthKey_<KEY_ID>.p8 |
+
+API Key 발급:
+
+- App Store Connect > 사용자 및 액세스 > 통합 > 키
+- `+` > 역할 `Developer` 이상 > `.p8` 다운로드
+- `.p8` 파일은 한 번만 다운로드 가능
 
 iOS 추가 확인:
+
 - [`ios/ExportOptions.plist`](/Users/tksehd2/Documents/flutter_proj/flutter_base/ios/ExportOptions.plist) 의 `teamID`, bundle id, 프로파일 이름 수정
 - `.mobileprovision` 파일명과 내부 프로파일 이름을 동일하게 유지
 - `PROVISIONING_PROFILE_NAME` 은 내부 프로파일 이름과 동일하게 입력
@@ -127,6 +138,23 @@ iOS 추가 확인:
 ```bash
 security cms -D -i your_profile.mobileprovision | plutil -extract Name raw -
 ```
+
+P12 생성 절차 예시:
+
+```bash
+openssl genrsa -out distribution.key 2048
+openssl req -new -key distribution.key -out distribution.csr -subj "/emailAddress=your@email.com/CN=Your Name/C=KR"
+openssl x509 -inform DER -in distribution.cer -out distribution.pem
+openssl pkcs12 -export -out distribution.p12 -inkey distribution.key -in distribution.pem
+```
+
+Provisioning Profile 생성 순서:
+
+1. Apple Developer > Devices 에서 테스트 기기 UDID 등록
+2. Apple Developer > Identifiers 에서 App ID 등록
+3. Apple Developer > Profiles 에서 목적에 맞는 프로파일 생성 후 다운로드
+
+기기 추가 후 프로파일을 다시 생성했다면 `PROVISIONING_PROFILE_BASE64` 와 `PROVISIONING_PROFILE_NAME` 도 같이 갱신합니다.
 
 ## 4. 기능 검증
 
@@ -142,6 +170,7 @@ security cms -D -i your_profile.mobileprovision | plutil -extract Name raw -
 - Demo Mode: 데모 모드 진입 조건과 노출 여부
 
 중요:
+
 - Gemini 와 Google Drive 는 토큰을 직접 받습니다.
 - 호출부가 bearer token 획득 책임을 가집니다.
 
@@ -162,6 +191,7 @@ flutter analyze
 ```
 
 동작:
+
 - 현재 시각 기반 build number 사용
 - AAB 빌드 완료 후 결과 폴더 열기
 
@@ -176,6 +206,7 @@ flutter analyze
 ```
 
 사전 확인:
+
 - `~/private_keys/AuthKey_<API_KEY_ID>.p8` 존재
 - [`ios/ExportOptions.plist`](/Users/tksehd2/Documents/flutter_proj/flutter_base/ios/ExportOptions.plist) 값이 현재 앱 기준인지
 - provisioning profile / certificate / App Store Connect API 설정 완료
