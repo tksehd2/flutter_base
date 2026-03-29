@@ -2,6 +2,9 @@
 
 Flutter 앱 팩토리용 템플릿 저장소. 새 앱을 만들 때 이 저장소를 복제한 뒤, 필요한 기능만 켜고 나머지는 끄는 방식으로 시작합니다.
 
+새 앱으로 시작할 때는 먼저 [`app_manifest.yaml`](/Users/tksehd2/Documents/flutter_proj/flutter_base/app_manifest.yaml) 과 [`NEW_APP_CHECKLIST.md`](/Users/tksehd2/Documents/flutter_proj/flutter_base/NEW_APP_CHECKLIST.md) 를 확인하세요.  
+실제 브랜딩, 시크릿 설정, 빌드, 배포 준비 절차는 `NEW_APP_CHECKLIST.md` 하나를 기준으로 따라가면 됩니다.
+
 ## 구조 원칙
 
 - `app/`: 앱 시작점, feature flag, 부트스트랩, production app shell
@@ -21,6 +24,14 @@ Flutter 앱 팩토리용 템플릿 저장소. 새 앱을 만들 때 이 저장�
 
 Drift와 Dio는 지금 템플릿에서 선택적으로 끌 수는 있지만, 역할 자체는 제품 기능이 아니라 기반 인프라라서 `core/` 에 둡니다.  
 `features/` 설계 규칙은 [`lib/features/README.md`](/Users/tksehd2/Documents/flutter_proj/flutter_base/lib/features/README.md) 를 우선 기준으로 봅니다.
+
+## 새 앱으로 복제할 때 먼저 볼 파일
+
+- [`app_manifest.yaml`](/Users/tksehd2/Documents/flutter_proj/flutter_base/app_manifest.yaml): 앱 이름, ID, feature 사용 여부, billing/analytics/backup 기대치
+- [`NEW_APP_CHECKLIST.md`](/Users/tksehd2/Documents/flutter_proj/flutter_base/NEW_APP_CHECKLIST.md): 복제 후 실제 작업 순서와 세부 명령/설정 절차
+- [`lib/app/config/app_features.dart`](/Users/tksehd2/Documents/flutter_proj/flutter_base/lib/app/config/app_features.dart): feature flag 단일 진입점
+- [`lib/app/presentation/app_home_page.dart`](/Users/tksehd2/Documents/flutter_proj/flutter_base/lib/app/presentation/app_home_page.dart): 기본 앱 시작 화면
+- [`lib/app/bootstrap/app_bootstrap.dart`](/Users/tksehd2/Documents/flutter_proj/flutter_base/lib/app/bootstrap/app_bootstrap.dart): 앱 시작 시 실제 초기화 위치
 
 ## 현재 구조
 
@@ -116,6 +127,14 @@ void main() {
 - 템플릿을 복제한 뒤 무엇을 먼저 바꿔야 하는지 안내함
 - demo 전용 버튼/로그 화면 없이 실제 앱 출발점 역할을 함
 
+가벼운 확장 포인트는 여기서 시작하는 것을 권장합니다.
+- billing 진입 섹션
+- analytics/privacy 안내 섹션
+- 앱 설정 화면 진입점
+- 앱 버전 / 빌드 번호 표시
+
+이 항목들은 아직 시스템으로 만들어두지 않았고, 앱별 요구사항이 정해진 뒤 `app/` 또는 적절한 `features/` 아래에 추가하는 것을 권장합니다.
+
 ## 새 optional feature 추가 방법
 
 예: Firebase Remote Config 같은 새 선택 기능을 넣는 경우
@@ -126,6 +145,8 @@ void main() {
 4. `lib/app/config/app_features.dart` 에 플래그 추가
 5. 초기화가 필요하면 `lib/app/bootstrap/app_bootstrap.dart` 에만 연결
 6. 공통 인프라가 아니면 `core/` 에 넣지 않음
+
+앱 전역 설정이나 앱별 메타데이터는 새 feature로 만들기 전에 먼저 `app_manifest.yaml` 에 기록해 두는 편이 좋습니다.
 
 ## 공통 사용 예시
 
@@ -154,24 +175,4 @@ final folderId = await ref.read(googleDriveServiceProvider).getOrCreateFolder(
 
 Gemini 와 Google Drive 는 bearer token 을 직접 받습니다. 토큰 획득 책임은 호출부에 있습니다.
 
-## 빌드 명령어
-
-```bash
-flutter pub get
-flutter run
-dart format .
-flutter analyze
-dart run build_runner build --delete-conflicting-outputs
-./build_aab.sh
-./upload_testflight.sh
-```
-
-`build_runner` 를 실행하면 `lib/core/database/app_database.g.dart` 가 갱신됩니다.
-
-## 배포 메모
-
-- Android AAB 로컬 빌드: [`build_aab.sh`](/Users/tksehd2/Documents/flutter_proj/flutter_base/build_aab.sh)
-- iOS Export 옵션: [`ios/ExportOptions.plist`](/Users/tksehd2/Documents/flutter_proj/flutter_base/ios/ExportOptions.plist)
-- 로컬 TestFlight 업로드: [`upload_testflight.sh`](/Users/tksehd2/Documents/flutter_proj/flutter_base/upload_testflight.sh)
-
-Google OAuth Client ID 는 `--dart-define=GOOGLE_SERVER_CLIENT_ID=...` 로 주입할 수 있습니다.
+빌드/배포 명령, 시크릿 설정, 앱 이름/Bundle ID 변경 절차는 [`NEW_APP_CHECKLIST.md`](/Users/tksehd2/Documents/flutter_proj/flutter_base/NEW_APP_CHECKLIST.md) 에 모아두었습니다.

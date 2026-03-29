@@ -1,0 +1,34 @@
+app:
+  name: "Your App Name"
+  bundle_id: "com.yourcompany.yourapp"
+  application_id: "com.yourcompany.yourapp"
+  description: "Short app summary for you and future AI agents."
+
+features:
+  google_auth: true
+  google_drive: true
+  gemini: true
+  drift_db: true
+  dio_network: true
+
+product_expectations:
+  billing_expected: false
+  analytics_expected: false
+  backup_expected: false
+
+review_and_demo:
+  has_public_demo_mode: false
+  app_store_review_notes: ""
+  internal_demo_notes: "If Google features are enabled, verify sign-in, token flow, and permission scopes before review."
+
+setup_notes:
+  first_edit_files:
+    - "app_manifest.yaml"
+    - "lib/app/config/app_features.dart"
+    - "lib/app/presentation/app_home_page.dart"
+    - "pubspec.yaml"
+    - "ios/ExportOptions.plist"
+  secrets_required_if_enabled:
+    - "GOOGLE_SERVER_CLIENT_ID"
+    - "GitHub Actions signing secrets"
+  clone_checklist_file: "NEW_APP_CHECKLIST.md"
