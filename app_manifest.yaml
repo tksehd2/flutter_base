@@ -10,7 +10,9 @@ features:
   gemini: true
   drift_db: true
   dio_network: true
-  demo_mode: true
+  demo_mode:
+    enabled: true
+    base_url: "https://www.toyapps.duckdns.org/demo"
 
 setup_notes:
   first_edit_files:

@@ -1,19 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../features/demo_mode/demo_mode.dart';
 import '../config/app_features.dart';
 
-class AppHomePage extends StatelessWidget {
+class AppHomePage extends ConsumerWidget {
   const AppHomePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final demoModeState = ref.watch(demoModeActiveProvider);
     final enabledFeatures = <String>[
       if (AppFeatures.googleAuthEnabled) 'Google Auth',
       if (AppFeatures.googleDriveEnabled) 'Google Drive',
       if (AppFeatures.geminiEnabled) 'Gemini',
       if (AppFeatures.driftDbEnabled) 'Drift DB',
       if (AppFeatures.dioNetworkEnabled) 'Dio Network',
-      if (AppFeatures.demoModeEnabled) 'Demo Mode',
+      if (AppFeatures.demoModeEnabled)
+        demoModeState.when(
+          data: (isActive) =>
+              isActive ? 'Demo Mode (Active)' : 'Demo Mode (Inactive)',
+          loading: () => 'Demo Mode (Checking)',
+          error: (_, _) => 'Demo Mode (Inactive)',
+        ),
     ];
 
     return Scaffold(
@@ -44,6 +53,28 @@ class AppHomePage extends StatelessWidget {
                   .toList(),
             ),
             const SizedBox(height: 24),
+            if (AppFeatures.demoModeEnabled) ...[
+              Text(
+                'Demo mode check',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 12),
+              Card(
+                child: ListTile(
+                  title: const Text('Remote marker lookup'),
+                  subtitle: Text(
+                    demoModeState.when(
+                      data: (isActive) => isActive
+                          ? 'Marker file found. Demo mode is active.'
+                          : 'Marker file not found. Demo mode is inactive.',
+                      loading: () => 'Checking GitHub Pages marker file...',
+                      error: (_, _) => 'Request failed. Demo mode is inactive.',
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
             Text(
               'Recommended next edits',
               style: Theme.of(context).textTheme.titleMedium,

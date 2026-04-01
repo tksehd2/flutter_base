@@ -4,6 +4,7 @@ class AppInitConfig {
   AppInitConfig({
     required this.appName,
     required this.bundleId,
+    required this.demoModeBaseUrl,
     required this.googleAuth,
     required this.googleDrive,
     required this.gemini,
@@ -15,6 +16,7 @@ class AppInitConfig {
 
   final String appName;
   final String bundleId;
+  final String demoModeBaseUrl;
   final bool googleAuth;
   final bool googleDrive;
   final bool gemini;
@@ -28,6 +30,7 @@ class CurrentTemplateState {
   CurrentTemplateState({
     required this.appName,
     required this.bundleId,
+    required this.demoModeBaseUrl,
     required this.googleAuth,
     required this.googleDrive,
     required this.gemini,
@@ -38,6 +41,7 @@ class CurrentTemplateState {
 
   final String appName;
   final String bundleId;
+  final String demoModeBaseUrl;
   final bool googleAuth;
   final bool googleDrive;
   final bool gemini;
@@ -81,6 +85,11 @@ Future<void> main(List<String> args) async {
         flagValue: flags['bundle-id'],
         prompt: 'Bundle/Application ID',
         currentValue: currentState.bundleId,
+      ),
+      demoModeBaseUrl: _resolveString(
+        flagValue: flags['demo-mode-base-url'],
+        prompt: 'Demo mode base URL',
+        currentValue: currentState.demoModeBaseUrl,
       ),
       googleAuth: _resolveBool(
         flags: flags,
@@ -133,6 +142,7 @@ Future<void> main(List<String> args) async {
 초기화 예정:
 - app name: ${config.appName}
 - bundle id: ${config.bundleId}
+- demoMode base URL: ${config.demoModeBaseUrl}
 - googleAuth: ${config.googleAuth}
 - googleDrive: ${config.googleDrive}
 - gemini: ${config.gemini}
@@ -170,6 +180,7 @@ void _printHelp() {
   dart run tool/create_app.dart \\
     --app-name "PlanB" \\
     --bundle-id "com.example.planb" \\
+    --demo-mode-base-url "https://example.github.io/demo" \\
     --google-auth true \\
     --google-drive true \\
     --gemini false \\
@@ -180,6 +191,7 @@ void _printHelp() {
 옵션:
   --app-name <name>
   --bundle-id <id>
+  --demo-mode-base-url <url>
   --google-auth <true|false>
   --google-drive <true|false>
   --gemini <true|false>
@@ -223,6 +235,10 @@ CurrentTemplateState _readCurrentState(
     bundleId:
         _readQuotedYamlValue(manifestContent, 'bundle_id') ??
         'com.yourcompany.yourapp',
+    demoModeBaseUrl:
+        _readNestedDemoModeBaseUrl(manifestContent) ??
+        _readConstString(appFeaturesContent, 'demoModeBaseUrl') ??
+        '',
     googleAuth: _readConstBool(appFeaturesContent, 'googleAuth') ?? true,
     googleDrive: _readConstBool(appFeaturesContent, 'googleDrive') ?? true,
     gemini: _readConstBool(appFeaturesContent, 'gemini') ?? true,
@@ -230,7 +246,7 @@ CurrentTemplateState _readCurrentState(
     dioNetwork: _readConstBool(appFeaturesContent, 'dioNetwork') ?? true,
     demoMode:
         _readConstBool(appFeaturesContent, 'demoMode') ??
-        _readYamlBool(manifestContent, 'demo_mode') ??
+        _readNestedDemoModeEnabled(manifestContent) ??
         false,
   );
 }
@@ -302,12 +318,20 @@ String? _readQuotedYamlValue(String content, String key) {
   return match?.group(1);
 }
 
-bool? _readYamlBool(String content, String key) {
+bool? _readNestedDemoModeEnabled(String content) {
   final match = RegExp(
-    '^\\s*$key:\\s*(true|false)',
+    r'^  demo_mode:\s*$[\r\n]+^    enabled:\s*(true|false)',
     multiLine: true,
   ).firstMatch(content);
   return match == null ? null : match.group(1) == 'true';
+}
+
+String? _readNestedDemoModeBaseUrl(String content) {
+  final match = RegExp(
+    '^    base_url:\\s*"([^"]*)"',
+    multiLine: true,
+  ).firstMatch(content);
+  return match?.group(1);
 }
 
 bool? _readConstBool(String content, String key) {
@@ -315,6 +339,13 @@ bool? _readConstBool(String content, String key) {
     'static const bool $key = (true|false);',
   ).firstMatch(content);
   return match == null ? null : match.group(1) == 'true';
+}
+
+String? _readConstString(String content, String key) {
+  final match = RegExp(
+    "static const String $key = '([^']*)';",
+  ).firstMatch(content);
+  return match?.group(1);
 }
 
 bool _isValidBundleId(String value) {
@@ -397,7 +428,11 @@ void _updateManifest(File file, AppInitConfig config) {
   content = _replaceBoolYamlValue(content, 'gemini', config.gemini);
   content = _replaceBoolYamlValue(content, 'drift_db', config.driftDb);
   content = _replaceBoolYamlValue(content, 'dio_network', config.dioNetwork);
-  content = _replaceBoolYamlValue(content, 'demo_mode', config.demoMode);
+  content = _replaceNestedDemoModeBlock(
+    content,
+    enabled: config.demoMode,
+    baseUrl: config.demoModeBaseUrl,
+  );
 
   file.writeAsStringSync(content);
 }
@@ -411,6 +446,11 @@ void _updateAppFeatures(File file, AppInitConfig config) {
   content = _replaceConstBool(content, 'driftDb', config.driftDb);
   content = _replaceConstBool(content, 'dioNetwork', config.dioNetwork);
   content = _replaceConstBool(content, 'demoMode', config.demoMode);
+  content = _replaceConstString(
+    content,
+    'demoModeBaseUrl',
+    config.demoModeBaseUrl,
+  );
 
   file.writeAsStringSync(content);
 }
@@ -440,10 +480,33 @@ String _replaceConstBool(String content, String key, bool value) {
   );
 }
 
+String _replaceConstString(String content, String key, String value) {
+  return content.replaceFirst(
+    RegExp("static const String $key = '([^']*)';"),
+    "static const String $key = '${value.replaceAll("'", "\\'")}';",
+  );
+}
+
+String _replaceNestedDemoModeBlock(
+  String content, {
+  required bool enabled,
+  required String baseUrl,
+}) {
+  return content.replaceFirstMapped(
+    RegExp(
+      r'^  demo_mode:\s*$[\r\n]+^    enabled:\s*(true|false)\s*$[\r\n]+^    base_url:\s*"([^"]*)"',
+      multiLine: true,
+    ),
+    (_) =>
+        '  demo_mode:\n    enabled: $enabled\n    base_url: "${_escapeYamlDoubleQuoted(baseUrl)}"',
+  );
+}
+
 void _printSummary(AppInitConfig config, {required bool dryRun}) {
   stdout.writeln('');
   stdout.writeln('- app name set: ${config.appName}');
   stdout.writeln('- bundle id set: ${config.bundleId}');
+  stdout.writeln('- demo mode base URL: ${config.demoModeBaseUrl}');
   stdout.writeln('- feature flags updated: ${dryRun ? 'dry-run only' : 'yes'}');
   stdout.writeln('- manifest updated: ${dryRun ? 'dry-run only' : 'yes'}');
   stdout.writeln('- rename flow: ${dryRun ? 'skipped (dry-run)' : 'done'}');

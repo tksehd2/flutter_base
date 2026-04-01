@@ -7,6 +7,7 @@ class AppFeatures {
   static const bool driftDb = true;
   static const bool dioNetwork = true;
   static const bool demoMode = true;
+  static const String demoModeBaseUrl = '';
 
   static bool get googleAuthEnabled => googleAuth;
 
@@ -19,4 +20,6 @@ class AppFeatures {
   static bool get dioNetworkEnabled => dioNetwork;
 
   static bool get demoModeEnabled => demoMode;
+
+  static String get demoModeBaseUrlValue => demoModeBaseUrl.trim();
 }
