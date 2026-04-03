@@ -63,6 +63,7 @@ jobs:
         with:
           name: debug-apk
           path: build/app/outputs/flutter-apk/app-debug-${{ env.BUILD_NUMBER }}.apk
+          retention-days: 1
 
   # iOS 빌드: P12_BASE64 secret이 설정된 경우에만 실행
   check-ios-secrets:
