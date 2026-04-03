@@ -50,13 +50,19 @@ jobs:
         run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Build Debug APK
-        run: flutter build apk --debug
+        run: |
+          BUILD_NUMBER=$(date +%s)
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
+          flutter build apk --debug --build-number=$BUILD_NUMBER
+
+      - name: Rename APK
+        run: mv build/app/outputs/flutter-apk/app-debug.apk build/app/outputs/flutter-apk/app-debug-${{ env.BUILD_NUMBER }}.apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: debug-apk
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          path: build/app/outputs/flutter-apk/app-debug-${{ env.BUILD_NUMBER }}.apk
 
   # iOS 빌드: P12_BASE64 secret이 설정된 경우에만 실행
   check-ios-secrets:
@@ -193,6 +199,6 @@ jobs:
           tag_name: debug-build-${{ github.run_number }}
           name: "Debug Build #${{ github.run_number }}"
           files: |
-            artifacts/android/app-debug.apk
+            artifacts/android/app-debug-*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
